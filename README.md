@@ -1,1 +1,3 @@
 # object_on_lanelet_checker
+
+オブジェクトが経路として使うlanelet上に存在するか判定し、存在するものを出力するノード

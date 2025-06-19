@@ -11,6 +11,7 @@
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
+#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 
 #include <unordered_set>
 
@@ -54,7 +55,8 @@ public:
         this->objectCallback(msg);
       });
 
-    object_pub_ = create_publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>("/objects_on_route", 10);
+    //object_pub_ = create_publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>("/objects_on_route", 10);
+    object_pub_ = create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>("/objects_on_route", 10);
     marker_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("/objects_on_route_marker", 10);
   }
 
@@ -64,7 +66,8 @@ private:
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_sub_;
   rclcpp::Subscription<autoware_planning_msgs::msg::LaneletRoute>::SharedPtr route_sub_;
   rclcpp::Subscription<DetectedObjectsWithFeature>::SharedPtr object_sub_;
-  rclcpp::Publisher<DetectedObjectsWithFeature>::SharedPtr object_pub_;
+  //rclcpp::Publisher<DetectedObjectsWithFeature>::SharedPtr object_pub_;
+  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr object_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_pub_;
 
   lanelet::LaneletMapPtr lanelet_map_;
@@ -98,7 +101,8 @@ private:
       RCLCPP_WARN(this->get_logger(), "route_lanelet_ids_.empty()");
       return;}
 
-    DetectedObjectsWithFeature objects_on_route;
+    //DetectedObjectsWithFeature objects_on_route;
+    autoware_auto_perception_msgs::msg::DetectedObjects objects_on_route;
     objects_on_route.header = msg->header;  // フレームは元のまま
 
     visualization_msgs::msg::MarkerArray markers;
@@ -136,7 +140,8 @@ private:
         RCLCPP_INFO(this->get_logger(), "object_on_route nothing!");
         continue;}
 
-      objects_on_route.feature_objects.push_back(obj_with_feature);
+      //objects_on_route.feature_objects.push_back(obj_with_feature);
+      objects_on_route.objects.push_back(obj);
 
       visualization_msgs::msg::Marker marker;
       marker.header.frame_id = msg->header.frame_id;  // 元のフレームIDをそのまま使う

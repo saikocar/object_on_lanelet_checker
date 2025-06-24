@@ -11,6 +11,7 @@
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
+#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 
 #include <unordered_set>
 
@@ -32,30 +33,43 @@ public:
   ObjectOnLaneletChecker()
     : Node("object_on_lanelet_checker")
   {
+    // パラメータ宣言と取得
+    this->declare_parameter<std::string>("map_topic", "/map/vector_map");
+    this->declare_parameter<std::string>("route_topic", "/planning/mission_planning/route");
+    this->declare_parameter<std::string>("input_objects_topic", "/camera/rois_depth");
+    this->declare_parameter<std::string>("output_objects_topic", "/objects_on_route");
+    this->declare_parameter<std::string>("marker_topic", "/objects_on_route_marker");
+
+    const auto map_topic = this->get_parameter("map_topic").as_string();
+    const auto route_topic = this->get_parameter("route_topic").as_string();
+    const auto input_objects_topic = this->get_parameter("input_objects_topic").as_string();
+    const auto output_objects_topic = this->get_parameter("output_objects_topic").as_string();
+    const auto marker_topic = this->get_parameter("marker_topic").as_string();
+
     tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
     tf_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_);
 
     map_sub_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
-      "/map/vector_map",
+      map_topic,
       rclcpp::QoS(1).transient_local().reliable(),
       std::bind(&ObjectOnLaneletChecker::mapCallback, this, std::placeholders::_1));
 
     route_sub_ = this->create_subscription<autoware_planning_msgs::msg::LaneletRoute>(
-      "/planning/mission_planning/route",
+      route_topic,
       rclcpp::QoS(1),
       [this](const autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr msg) {
         this->routeCallback(msg);
       });
 
     object_sub_ = this->create_subscription<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(
-      "/camera/rois_depth",
+      input_objects_topic,
       rclcpp::QoS(10),
       [this](const tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr msg) {
         this->objectCallback(msg);
       });
 
-    object_pub_ = create_publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>("/objects_on_route", 10);
-    marker_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("/objects_on_route_marker", 10);
+    object_pub_ = create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(output_objects_topic, 10);
+    marker_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>(marker_topic, 10);
   }
 
 private:
@@ -64,7 +78,8 @@ private:
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_sub_;
   rclcpp::Subscription<autoware_planning_msgs::msg::LaneletRoute>::SharedPtr route_sub_;
   rclcpp::Subscription<DetectedObjectsWithFeature>::SharedPtr object_sub_;
-  rclcpp::Publisher<DetectedObjectsWithFeature>::SharedPtr object_pub_;
+  //rclcpp::Publisher<DetectedObjectsWithFeature>::SharedPtr object_pub_;
+  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr object_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_pub_;
 
   lanelet::LaneletMapPtr lanelet_map_;
@@ -98,7 +113,8 @@ private:
       RCLCPP_WARN(this->get_logger(), "route_lanelet_ids_.empty()");
       return;}
 
-    DetectedObjectsWithFeature objects_on_route;
+    //DetectedObjectsWithFeature objects_on_route;
+    autoware_auto_perception_msgs::msg::DetectedObjects objects_on_route;
     objects_on_route.header = msg->header;  // フレームは元のまま
 
     visualization_msgs::msg::MarkerArray markers;
@@ -136,7 +152,8 @@ private:
         RCLCPP_INFO(this->get_logger(), "object_on_route nothing!");
         continue;}
 
-      objects_on_route.feature_objects.push_back(obj_with_feature);
+      //objects_on_route.feature_objects.push_back(obj_with_feature);
+      objects_on_route.objects.push_back(obj);
 
       visualization_msgs::msg::Marker marker;
       marker.header.frame_id = msg->header.frame_id;  // 元のフレームIDをそのまま使う

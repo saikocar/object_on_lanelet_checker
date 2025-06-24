@@ -19,6 +19,8 @@
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>autoware_planning_msgs</depend>
 
+  <depend>autoware_auto_perception_msgs</depend>
+
   <depend>lanelet2_core</depend>
   <depend>lanelet2_io</depend>
   <depend>lanelet2_projection</depend>

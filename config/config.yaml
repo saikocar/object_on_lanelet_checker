@@ -1,0 +1,8 @@
+object_on_lanelet_checker:
+  ros__parameters:
+    map_topic: "/map/vector_map"
+    route_topic: "/planning/mission_planning/route"
+    input_objects_topic: "/camera/rois_depth"
+    output_objects_topic: "/objects_on_route"
+    marker_topic: "/objects_on_route_marker"
+

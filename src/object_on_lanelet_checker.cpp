@@ -39,12 +39,17 @@ public:
     this->declare_parameter<std::string>("input_objects_topic", "/camera/rois_depth");
     this->declare_parameter<std::string>("output_objects_topic", "/objects_on_route");
     this->declare_parameter<std::string>("marker_topic", "/objects_on_route_marker");
+    this->declare_parameter<std::string>("marker_on_ns", "objects_on_route");
+    this->declare_parameter<std::string>("marker_off_ns", "objects_off_route");
+
 
     const auto map_topic = this->get_parameter("map_topic").as_string();
     const auto route_topic = this->get_parameter("route_topic").as_string();
     const auto input_objects_topic = this->get_parameter("input_objects_topic").as_string();
     const auto output_objects_topic = this->get_parameter("output_objects_topic").as_string();
     const auto marker_topic = this->get_parameter("marker_topic").as_string();
+    marker_on_ns_ = this->get_parameter("marker_on_ns").as_string();
+    marker_off_ns_ = this->get_parameter("marker_off_ns").as_string();
 
     tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
     tf_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_);
@@ -84,6 +89,9 @@ private:
 
   lanelet::LaneletMapPtr lanelet_map_;
   std::unordered_set<lanelet::Id> route_lanelet_ids_;
+
+  std::string marker_on_ns_;
+  std::string marker_off_ns_;
 
   void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin & msg) {
     lanelet_map_ = std::make_shared<lanelet::LaneletMap>();
@@ -148,29 +156,46 @@ private:
         }
       }
 
-      if (!on_route){
-        RCLCPP_INFO(this->get_logger(), "object_on_route nothing!");
-        continue;}
+      if (on_route){
+        //objects_on_route.feature_objects.push_back(obj_with_feature);
+        objects_on_route.objects.push_back(obj);
 
-      //objects_on_route.feature_objects.push_back(obj_with_feature);
-      objects_on_route.objects.push_back(obj);
+        visualization_msgs::msg::Marker marker;
+        marker.header.frame_id = msg->header.frame_id;  // 元のフレームIDをそのまま使う
+        marker.header.stamp = msg->header.stamp;
+        marker.ns = marker_on_ns_;
+        marker.id = marker_id++;
+        marker.type = visualization_msgs::msg::Marker::SPHERE;
+        marker.action = visualization_msgs::msg::Marker::ADD;
+        marker.pose = obj.kinematics.pose_with_covariance.pose;  // 元の座標系のposeを使う
+        marker.scale.x = 1.0;
+        marker.scale.y = 1.0;
+        marker.scale.z = 1.0;
+        marker.color.r = 1.0;
+        marker.color.g = 0.0;
+        marker.color.b = 0.0;
+        marker.color.a = 0.8;
+        markers.markers.push_back(marker);
+      }
+      else{
+        visualization_msgs::msg::Marker marker;
+        marker.header.frame_id = msg->header.frame_id;  // 元のフレームIDをそのまま使う
+        marker.header.stamp = msg->header.stamp;
+        marker.ns = marker_off_ns_;
+        marker.id = marker_id++;
+        marker.type = visualization_msgs::msg::Marker::SPHERE;
+        marker.action = visualization_msgs::msg::Marker::ADD;
+        marker.pose = obj.kinematics.pose_with_covariance.pose;  // 元の座標系のposeを使う
+        marker.scale.x = 1.0;
+        marker.scale.y = 1.0;
+        marker.scale.z = 1.0;
+        marker.color.r = 0.0;
+        marker.color.g = 0.0;
+        marker.color.b = 1.0;
+        marker.color.a = 0.8;
+        markers.markers.push_back(marker);
 
-      visualization_msgs::msg::Marker marker;
-      marker.header.frame_id = msg->header.frame_id;  // 元のフレームIDをそのまま使う
-      marker.header.stamp = msg->header.stamp;
-      marker.ns = "objects_on_route";
-      marker.id = marker_id++;
-      marker.type = visualization_msgs::msg::Marker::SPHERE;
-      marker.action = visualization_msgs::msg::Marker::ADD;
-      marker.pose = obj.kinematics.pose_with_covariance.pose;  // 元の座標系のposeを使う
-      marker.scale.x = 1.0;
-      marker.scale.y = 1.0;
-      marker.scale.z = 1.0;
-      marker.color.r = 1.0;
-      marker.color.g = 0.0;
-      marker.color.b = 0.0;
-      marker.color.a = 0.8;
-      markers.markers.push_back(marker);
+      }
     }
 
     object_pub_->publish(objects_on_route);

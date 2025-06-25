@@ -3,6 +3,8 @@ object_on_lanelet_checker:
     map_topic: "/map/vector_map"
     route_topic: "/planning/mission_planning/route"
     input_objects_topic: "/camera/rois_depth"
-    output_objects_topic: "/objects_on_route_preprocess"
+    output_objects_topic: "/objects_on_route"
     marker_topic: "/objects_on_route_marker"
+    marker_on_ns: "objects_on_route"
+    marker_off_ns: "objects_off_route"
 

@@ -37,7 +37,7 @@ public:
     this->declare_parameter<std::string>("map_topic", "/map/vector_map");
     this->declare_parameter<std::string>("route_topic", "/planning/mission_planning/route");
     this->declare_parameter<std::string>("input_objects_topic", "/camera/rois_depth");
-    this->declare_parameter<std::string>("output_objects_topic", "/objects_on_route");
+    this->declare_parameter<std::string>("output_objects_topic", "/objects_on_route_preprocess");
     this->declare_parameter<std::string>("marker_topic", "/objects_on_route_marker");
     this->declare_parameter<std::string>("marker_on_ns", "objects_on_route");
     this->declare_parameter<std::string>("marker_off_ns", "objects_off_route");
